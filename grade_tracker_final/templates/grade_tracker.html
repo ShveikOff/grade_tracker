@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-page Template</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 600px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        #studentsResult,
+        #takenExams,
+        #gradesResult,
+        #AvgGrade,
+        #studentAmount {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="page0">
+        <h1>Login</h1>
+        <div>
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username">
+        </div>
+        <div>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password">
+        </div>
+        <button onclick="authenticate_user()">Enter</button>
+    </div>
+
+    <div class="container hidden" id="page1">
+        <h1>Student Information</h1>
+        <div>
+            <label for="studentName">Student's Name:</label>
+            <span id="studentName"></span>
+        </div>
+        <div>
+            <label for="phoneNumber">Phone Number:</label>
+            <span id="phoneNumber0"></span>
+        </div>
+        <div>
+            <label for="email">Email:</label>
+            <span id="email0"></span>
+        </div>
+        <div>
+            <h2>Taken Exams:</h2>
+            <p id="takenExams"></p>
+        </div>
+        <div>
+            <h2>Avg Grade by Exam:</h2>
+            <p id="AvgGrade"></p>
+        </div>
+    </div>
+
+    <div class="container hidden" id="page2">
+        <h1>Add Grade and Student</h1>
+        <div style="display: flex;">
+            <div style="flex: 1;">
+                <div>
+                    <label for="studentName1">Student Name:</label>
+                    <input type="text" id="studentName1">
+                </div>
+                <div>
+                    <label for="examName">Exam Name:</label>
+                    <input type="text" id="examName">
+                </div>
+                <div>
+                    <label for="grade">Grade:</label>
+                    <input type="text" id="grade">
+                </div>
+                <div>
+                    <button onclick="addGrade()">Add Grade</button>
+                </div>
+                <div>
+                    <h2>Grades:</h2>
+                    <p id="gradesResult"></p>
+                </div>
+                <div>
+                    <h2>Amount of students: </h2>
+                    <p id="studentAmount"></p>
+                </div>
+            </div>
+            <div style="flex: 1;">
+                <div>
+                    <label for="studentName2">Student Name:</label>
+                    <input type="text" id="studentName2">
+                </div>
+                <div>
+                    <label for="phoneNumber1">Phone Number:</label>
+                    <input type="text" id="phoneNumber1">
+                </div>
+                <div>
+                    <label for="email1">Email:</label>
+                    <input type="text" id="email1">
+                </div>
+                <div>
+                    <label for="username1">Username:</label>
+                    <input type="text" id="username1">
+                </div>
+                <div>
+                    <label for="password1">Password:</label>
+                    <input type="password" id="password1">
+                </div>
+                <div>
+                    <button onclick="addStudent()">Add Student</button>
+                    <button onclick="get_logs()">Get logs</button>
+                </div>
+                <div>
+                    <h2>Students:</h2>
+                    <p id="studentsResult"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    let user_name = ''
+    let user_id = ''
+    let user_status = ''
+    function authenticate_user() {
+        user_name = document.getElementById("username").value;
+        const password = document.getElementById("password").value;
+    
+        const data = {
+            user_name: user_name,
+            password: password
+        };
+    
+        // Опции для запроса fetch
+        const options = {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        };
+    
+    
+        fetch("/authenticate", options)
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    // Если аутентификация успешна, записываем данные в переменные
+                    user_id = result.user_id;
+                    user_status = result.user_status;
+    
+                    // Пример использования данных
+                    console.log("User ID:", user_id);
+                    console.log("User Status:", user_status);
+                    if (user_status == "admin") {
+                        document.getElementById("page0").classList.add("hidden")
+                        document.getElementById("page2").classList.remove("hidden")
+                    }
+                    if (user_status == "student") {
+                        document.getElementById("page0").classList.add("hidden")
+                        document.getElementById("page1").classList.remove("hidden")
+                        get_student_info()
+                    }
+                    // Здесь вы можете выполнять другие действия с полученными данными
+                } else {
+                    // Если аутентификация не удалась, выводим сообщение об ошибке
+                    console.error("Authentication failed:", result.message);
+                    // Здесь вы можете выполнить другие действия в случае неудачной аутентификации
+                }
+        }).catch(error => {
+            console.error("Error occurred:", error);
+            // Обработка ошибок при выполнении запроса
+        });
+    }
+    function addStudent() {
+        const studentName = document.getElementById("studentName2").value
+        const phoneNumber = document.getElementById("phoneNumber1").value
+        const email = document.getElementById("email1").value
+        const user_name = document.getElementById("username1").value
+        const password = document.getElementById("password1").value
+        const user_status = "student"
+    
+        const data = {
+            user_name: user_name,
+            full_name: studentName,
+            password: password,
+            email: email,
+            phone_number: phoneNumber,
+            address: "",
+            user_status: user_status
+        };
+    
+        const options = {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        };
+    
+        fetch("/add_user", options)
+            .then(response => response.json())
+            .then(result => {
+                console.log(result.message);
+                if (result.success) {
+                    console.log(result.message);
+                } else {
+                    console.error("Adding user failed:", result.message);
+                }
+        }).catch(error => {
+            console.error("Error occured:", error);
+        });
+    }
+    
+    function get_students() {
+        fetch("/get_students")
+        .then(response => response.json())
+        .then(messages => {
+            const formattedMessages = messages.map(message => {
+                // Удаляем открывающую и закрывающую скобки
+                return message.slice(1, -1);
+            });
+            document.getElementById("studentsResult").innerHTML = formattedMessages.join('<br>');
+        })
+    }
+    
+    function get_student_info() {
+        fetch("/get_student_info?user_id=" + user_id)
+        .then(response => response.json())
+        .then(studentInfo => {
+            const user_id = studentInfo.user_id;
+            const user_name = studentInfo.user_name;
+            const full_name = studentInfo.full_name;
+            const email = studentInfo.email;
+            const phone_number = studentInfo.phone_number;
+    
+            document.getElementById("studentName").innerHTML = full_name
+            document.getElementById("phoneNumber0").innerHTML = phone_number
+            document.getElementById("email0").innerHTML = email 
+        })
+    }
+    
+    function addGrade() {
+        const studentName = document.getElementById("studentName1").value
+        const examName = document.getElementById("examName").value
+        const grade = document.getElementById("grade").value
+        const lecturer_id = user_id
+    
+        const data = {
+            course_name: examName,
+            lecturer_id: lecturer_id
+        }
+    
+        const options = {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+                "Content-type": "application/json; charset=UTF-8"
+            }
+        };
+    
+        fetch("/add_course", options)
+            .then(response => response.json())
+            .then(result => {
+                console.log(result.message);
+                if (result.success) {
+                    const course_id = result.course_id;
+                    const data1 = {
+                        course_id: course_id,
+                        student_name: studentName,
+                        lecturer_id: lecturer_id,
+                        grade: grade
+                    };
+    
+                    const options1 = {
+                        method: "POST",
+                        body: JSON.stringify(data1),
+                        headers: {
+                            "Content-type": "application/json; charset=UTF-8"
+                        }
+                    };
+    
+                    fetch("/add_grade", options1)
+                        .then(response => response.json())
+                        .then(result => {
+                            console.log(result.message);
+                            if (!result.success) {
+                                console.error("Adding grade failed:", result.message);
+                            }
+                        }).catch(error => {
+                            console.error("Error occurred:", error);
+                        });
+                } else {
+                    console.error("Adding course failed:", result.message);
+                }
+            }).catch(error => {
+                console.error("Error occurred:", error);
+            });
+    }
+    
+    function get_student_grades() {
+        fetch("/get_student_grades?user_id=" + user_id)
+        .then(response => response.json())
+        .then(messages => {
+            const formattedMessages = messages.map(message => {
+                // Удаляем открывающую и закрывающую скобки
+                return message.slice(1, -1);
+            });
+            document.getElementById("takenExams").innerHTML = formattedMessages.join('<br>');
+        })
+    }
+    
+    function get_all_grades() {
+        fetch("/get_grades")
+        .then(response => response.json())
+        .then(messages => {
+            const formattedMessages = messages.map(message => {
+                // Удаляем открывающую и закрывающую скобки
+                return message.slice(1, -1);
+            });
+            document.getElementById("gradesResult").innerHTML = formattedMessages.join('<br>');
+        })
+    }
+
+
+    function get_avg_grades() {
+        fetch("/get_avg_grades")
+        .then(response => response.json())
+        .then(messages => {
+            const formattedMessages = messages.map(message => {
+                // Удаляем открывающую и закрывающую скобки
+                return message.slice(1, -1);
+            });
+            document.getElementById("AvgGrade").innerHTML = formattedMessages.join('<br>');
+        })
+    }
+
+    function get_student_count_by_course(){
+        fetch("/get_student_counts_by_course")
+            .then(response => response.json())
+            .then(messages => {
+                const formattedMessages = messages.map(message => {
+                    // Удаляем открывающую и закрывающую скобки
+                    return message.slice(1, -1);
+                });
+                // Вызываем функцию get_student_count, чтобы получить общее количество студентов
+                get_student_count().then(total_count => {
+                    document.getElementById("studentAmount").innerHTML = formattedMessages.join('<br>') + '<br>Total students: ' + total_count;
+                });
+            });
+}
+
+    function get_student_count() {
+        // Возвращаем промис
+        return fetch("/get_total_student_count")
+            .then(response => response.json())
+            .then(result => {
+                const total_count = result.total_student_count;
+                return total_count;
+            });
+    }
+
+    function get_logs() {
+    fetch("/get_logs")
+        .then(response => response.json())
+        .then(messages => {
+            messages.forEach(message => {
+                console.log(message);
+            });
+        });
+}
+
+
+    setInterval(get_students, 1000)
+    setInterval(get_student_grades, 1000)
+    setInterval(get_all_grades, 1000)
+    setInterval(get_avg_grades, 1000)
+    setInterval(get_student_count_by_course, 1000)
+
+    
+    
+</script>
+</html>
